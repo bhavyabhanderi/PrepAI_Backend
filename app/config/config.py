@@ -1,0 +1,34 @@
+from typing import Optional
+from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
+from dotenv import load_dotenv
+
+# Load env variables from .env if present
+load_dotenv()
+
+class Settings(BaseSettings):
+    PROJECT_NAME: str = "AI Interview Prep Platform API"
+    ENVIRONMENT: str = "development"
+    API_V1_STR: str = "/api/v1"
+    
+    # Security
+    SECRET_KEY: str
+    ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 * 8  # 8 days
+    
+    # Database
+    MONGODB_URL: str
+    MONGO_DATABASE: str
+    
+    # External APIs
+    GROQ_API_KEY: Optional[str] = None
+    GROQ_MODEL: str = "llama-3.3-70b-versatile"
+    NVIDIA_API_KEY: Optional[str] = None
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        case_sensitive=True,
+        extra="ignore"
+    )
+
+settings = Settings()
