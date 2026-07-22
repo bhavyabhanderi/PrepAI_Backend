@@ -19,3 +19,5 @@ gTTS
 pymongo
 google-auth
 requests
+certifi
+dnspython

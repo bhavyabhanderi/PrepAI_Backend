@@ -1,6 +1,7 @@
 from motor.motor_asyncio import AsyncIOMotorClient
 from beanie import init_beanie
 from app.config.config import settings
+import certifi
 
 # Workaround for Beanie + Motor compatibility issue:
 # MotorDatabase defines __call__ (which raises TypeError), but because it exists,
@@ -16,8 +17,8 @@ async def init_db():
     """
     Initialize MongoDB connection and Beanie ODM.
     """
-    # Create Motor client
-    client = AsyncIOMotorClient(settings.MONGODB_URL)
+    # Create Motor client with certifi to resolve SSL handshake issues
+    client = AsyncIOMotorClient(settings.MONGODB_URL, tlsCAFile=certifi.where())
     
     # Get database instance
     db = client[settings.MONGO_DATABASE]
