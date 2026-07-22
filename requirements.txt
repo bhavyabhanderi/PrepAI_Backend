@@ -17,3 +17,5 @@ python-docx
 aiofiles
 gTTS
 pymongo
+google-auth
+requests
