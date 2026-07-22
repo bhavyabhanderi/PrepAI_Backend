@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, Field, BeforeValidator
+from pydantic import BaseModel, EmailStr, Field, BeforeValidator, field_validator
 from typing import Optional, List, Annotated
 from datetime import datetime
 
@@ -41,6 +41,13 @@ class UserResponse(BaseModel):
 # --- Profile Schemas ---
 class ProfileUpdate(BaseModel):
     mobile: Optional[str] = None
+
+    @field_validator("mobile", mode="before")
+    @classmethod
+    def cast_mobile_to_str(cls, v):
+        if isinstance(v, int):
+            return str(v)
+        return v
     college: Optional[str] = None
     department: Optional[str] = None
     branch: Optional[str] = None

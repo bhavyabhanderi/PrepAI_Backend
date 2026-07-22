@@ -1,7 +1,7 @@
 from typing import Optional, List
 from datetime import datetime
 from beanie import Document
-from pydantic import EmailStr, Field
+from pydantic import EmailStr, Field, field_validator
 
 class User(Document):
     name: str
@@ -19,6 +19,13 @@ class User(Document):
 class Profile(Document):
     user_id: str # Reference to User document ID
     mobile: Optional[str] = None
+
+    @field_validator("mobile", mode="before")
+    @classmethod
+    def cast_mobile_to_str(cls, v):
+        if isinstance(v, int):
+            return str(v)
+        return v
     college: Optional[str] = None
     department: Optional[str] = None
     branch: Optional[str] = None

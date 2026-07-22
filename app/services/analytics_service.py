@@ -536,6 +536,9 @@ class AnalyticsService:
                 "icon": "user-voice" if itype == "hr" else "code",
                 "color": "#533086" if itype == "hr" else "#4A4DC9"
             })
+        from app.models.syllabus import SavedSyllabus
+        syllabi = await SavedSyllabus.find(SavedSyllabus.user_id == user_id).to_list()
+
         for res in resumes:
             activities.append({
                 "id": f"resume_{res.id}",
@@ -554,6 +557,15 @@ class AnalyticsService:
                 "icon": "code",
                 "color": "#4A4DC9"
             })
+        for s in syllabi:
+            activities.append({
+                "id": f"syllabus_{s.id}",
+                "type": "Syllabus Analysis",
+                "score": None,
+                "timestamp": s.created_at,
+                "icon": "book",
+                "color": "#10B981"
+            })
 
         activities.sort(key=lambda x: x["timestamp"], reverse=True)
         recent_activity = []
@@ -569,7 +581,7 @@ class AnalyticsService:
                 return f"{diff.seconds // 60} minutes ago"
             return "Just now"
 
-        for act in activities[:4]:
+        for act in activities:
             recent_activity.append({
                 "id": act["id"],
                 "type": act["type"],
