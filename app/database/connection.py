@@ -41,6 +41,7 @@ async def init_db():
             "app.models.analytics.LearningPlan",
             "app.models.analytics.UserProgress",
             "app.models.rating.Rating",
+            "app.models.syllabus.SavedSyllabus",
         ]
     )
     

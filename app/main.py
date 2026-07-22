@@ -42,6 +42,7 @@ from app.api.v1.coding import router as coding_router
 from app.api.v1.analytics import router as analytics_router
 from app.api.v1.admin import router as admin_router
 from app.api.v1.rating import router as rating_router
+from app.api.v1.syllabus import router as syllabus_router
 
 app.include_router(auth_router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
 app.include_router(profile_router, prefix=f"{settings.API_V1_STR}/profile", tags=["profile"])
@@ -52,3 +53,4 @@ app.include_router(coding_router, prefix=f"{settings.API_V1_STR}/coding", tags=[
 app.include_router(analytics_router, prefix=f"{settings.API_V1_STR}/analytics", tags=["analytics"])
 app.include_router(admin_router, prefix=f"{settings.API_V1_STR}/admin", tags=["admin"])
 app.include_router(rating_router, prefix=f"{settings.API_V1_STR}/rating", tags=["rating"])
+app.include_router(syllabus_router, prefix=f"{settings.API_V1_STR}/syllabus", tags=["syllabus"])
