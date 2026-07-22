@@ -58,3 +58,10 @@ class ProfileUpdate(BaseModel):
     github: Optional[str] = None
     linkedin: Optional[str] = None
     profile_image_url: Optional[str] = None
+
+class ForgotPassword(BaseModel):
+    email: EmailStr
+
+class ResetPasswordDirect(BaseModel):
+    email: EmailStr
+    new_password: str = Field(..., min_length=8)

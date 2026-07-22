@@ -48,3 +48,19 @@ async def google_login(token_data: __import__('app.schemas.user', fromlist=['Goo
         "access_token": result["access_token"],
         "token_type": result["token_type"]
     }
+
+@router.post("/forgot-password", status_code=status.HTTP_200_OK)
+async def forgot_password(request_in: __import__('app.schemas.user', fromlist=['ForgotPassword']).ForgotPassword) -> Any:
+    """
+    Send password reset email.
+    """
+    await AuthService.forgot_password(request_in.email)
+    return {"message": "Password reset link sent successfully."}
+
+@router.post("/reset-password-direct", status_code=status.HTTP_200_OK)
+async def reset_password_direct(request_in: __import__('app.schemas.user', fromlist=['ResetPasswordDirect']).ResetPasswordDirect) -> Any:
+    """
+    Directly reset password if the email is correct.
+    """
+    await AuthService.reset_password_direct(request_in.email, request_in.new_password)
+    return {"message": "Password reset successfully."}

@@ -24,6 +24,17 @@ class Settings(BaseSettings):
     GROQ_API_KEY: Optional[str] = None
     GROQ_MODEL: str = "llama-3.3-70b-versatile"
     NVIDIA_API_KEY: Optional[str] = None
+    RESEND_API_KEY: Optional[str] = None
+
+    # SMTP/Email configuration
+    SMTP_TLS: bool = True
+    SMTP_SSL: bool = False
+    SMTP_PORT: int = 587
+    SMTP_HOST: Optional[str] = "smtp.gmail.com"
+    SMTP_USER: Optional[str] = None
+    SMTP_PASSWORD: Optional[str] = None
+    EMAILS_FROM_EMAIL: Optional[str] = None
+    EMAILS_FROM_NAME: Optional[str] = "PrepAI"
 
     model_config = SettingsConfigDict(
         env_file=".env",
