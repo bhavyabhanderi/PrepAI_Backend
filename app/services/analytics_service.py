@@ -446,7 +446,7 @@ class AnalyticsService:
         resumes = await ResumeAnalysis.find(ResumeAnalysis.user_id == user_id).to_list()
         codings = await CodingSubmission.find(CodingSubmission.user_id == user_id).to_list()
 
-        total_interviews = len(reports)
+        total_interviews = len(reports) + len(codings)
         latest_resume_score = resumes[-1].ats_score if resumes else 0
         
         from bson import ObjectId
@@ -462,15 +462,20 @@ class AnalyticsService:
 
         tech_scores = [r.overall_score for r in reports if interview_type_map.get(r.interview_id) == "technical"]
         hr_scores = [r.overall_score for r in reports if interview_type_map.get(r.interview_id) == "hr"]
+        
+        # Add coding scores to technical score average
+        coding_scores = [c.code_quality_score or 0 for c in codings]
+        all_tech_scores = tech_scores + coding_scores
 
-        tech_avg = sum(tech_scores) / len(tech_scores) if tech_scores else 0.0
-        hr_avg = sum(hr_scores) / len(hr_scores) if hr_scores else 0.0
+        tech_avg = sum(all_tech_scores) / len(all_tech_scores) if all_tech_scores else None
+        hr_avg = sum(hr_scores) / len(hr_scores) if hr_scores else None
+        has_resume = len(resumes) > 0
 
         stats = [
             {
                 "label": "Total Interviews",
                 "value": str(total_interviews),
-                "change": "+1" if total_interviews > 0 else "0",
+                "change": f"+{total_interviews}" if total_interviews > 0 else "0",
                 "up": True,
                 "icon": "user-voice",
                 "color": "#533086",
@@ -478,8 +483,8 @@ class AnalyticsService:
             },
             {
                 "label": "Resume Score",
-                "value": f"{latest_resume_score}%" if latest_resume_score else "N/A",
-                "change": "+5%" if latest_resume_score > 0 else "0%",
+                "value": f"{latest_resume_score}%" if has_resume else "N/A",
+                "change": "+5%" if has_resume else "0%",
                 "up": True,
                 "icon": "file-text",
                 "color": "#FC9145",
@@ -487,8 +492,8 @@ class AnalyticsService:
             },
             {
                 "label": "Technical Score",
-                "value": f"{round(tech_avg)}%" if tech_avg else "N/A",
-                "change": "+2%" if tech_avg > 0 else "0%",
+                "value": f"{round(tech_avg)}%" if tech_avg is not None else "N/A",
+                "change": "+2%" if tech_avg is not None else "0%",
                 "up": True,
                 "icon": "code",
                 "color": "#4A4DC9",
@@ -496,7 +501,7 @@ class AnalyticsService:
             },
             {
                 "label": "HR Score",
-                "value": f"{round(hr_avg)}%" if hr_avg else "N/A",
+                "value": f"{round(hr_avg)}%" if hr_avg is not None else "N/A",
                 "change": "0%",
                 "up": True,
                 "icon": "trophy",
@@ -515,9 +520,15 @@ class AnalyticsService:
         for i in range(7):
             day_date = start_of_week + timedelta(days=i)
             next_day_date = day_date + timedelta(days=1)
+            
             day_reports = [r for r in reports if day_date <= r.created_at < next_day_date]
-            count = len(day_reports)
-            avg_score = sum(r.overall_score for r in day_reports) / count if count > 0 else 0
+            day_codings = [c for c in codings if day_date <= c.created_at < next_day_date]
+            
+            count = len(day_reports) + len(day_codings)
+            
+            scores_sum = sum(r.overall_score for r in day_reports) + sum(c.code_quality_score or 0 for c in day_codings)
+            avg_score = scores_sum / count if count > 0 else 0
+            
             weekly_data.append({
                 "day": days_names[i],
                 "interviews": count,
@@ -531,7 +542,7 @@ class AnalyticsService:
             activities.append({
                 "id": f"report_{r.id}",
                 "type": f"{itype.upper()} Interview",
-                "score": round(r.overall_score),
+                "score": round(r.overall_score or 0),
                 "timestamp": r.created_at,
                 "icon": "user-voice" if itype == "hr" else "code",
                 "color": "#533086" if itype == "hr" else "#4A4DC9"
