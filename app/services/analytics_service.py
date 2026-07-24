@@ -446,7 +446,7 @@ class AnalyticsService:
         resumes = await ResumeAnalysis.find(ResumeAnalysis.user_id == user_id).to_list()
         codings = await CodingSubmission.find(CodingSubmission.user_id == user_id).to_list()
 
-        total_interviews = len(reports) + len(codings)
+        total_interviews = len(reports)
         latest_resume_score = resumes[-1].ats_score if resumes else 0
         
         from bson import ObjectId
@@ -536,19 +536,30 @@ class AnalyticsService:
             })
 
         # 3. Recent Activity
+        TYPE_META = {
+            "hr": {"label": "HR Interview", "icon": "user-voice", "color": "#533086"},
+            "technical": {"label": "Technical Interview", "icon": "code", "color": "#4A4DC9"},
+            "behavioral": {"label": "Behavioral Interview", "icon": "user-voice", "color": "#533086"},
+            "aptitude": {"label": "Aptitude Test", "icon": "brain", "color": "#FC9145"},
+            "coding": {"label": "Coding Challenge", "icon": "code", "color": "#4A4DC9"}
+        }
+
         activities = []
         for r in reports:
-            itype = interview_type_map.get(r.interview_id, "Interview")
+            itype = interview_type_map.get(r.interview_id, "unknown")
+            meta = TYPE_META.get(itype, {"label": f"{itype.capitalize()} Interview", "icon": "user-voice", "color": "#533086"})
             activities.append({
                 "id": f"report_{r.id}",
-                "type": f"{itype.upper()} Interview",
+                "type": meta["label"],
                 "score": round(r.overall_score or 0),
                 "timestamp": r.created_at,
-                "icon": "user-voice" if itype == "hr" else "code",
-                "color": "#533086" if itype == "hr" else "#4A4DC9"
+                "icon": meta["icon"],
+                "color": meta["color"]
             })
         from app.models.syllabus import SavedSyllabus
+        from app.models.analytics import LearningPlan
         syllabi = await SavedSyllabus.find(SavedSyllabus.user_id == user_id).to_list()
+        learning_plans = await LearningPlan.find(LearningPlan.user_id == user_id).to_list()
 
         for res in resumes:
             activities.append({
@@ -559,14 +570,36 @@ class AnalyticsService:
                 "icon": "file-text",
                 "color": "#FC9145"
             })
+            
+        for s in syllabi:
+            activities.append({
+                "id": f"syllabus_{s.id}",
+                "type": "Syllabus Analysis",
+                "score": None,
+                "timestamp": s.created_at,
+                "icon": "book",
+                "color": "#10B981"
+            })
+            
+        for lp in learning_plans:
+            activities.append({
+                "id": f"lp_{lp.id}",
+                "type": "Learning Plan",
+                "score": None,
+                "timestamp": lp.created_at,
+                "icon": "calendar",
+                "color": "#F59E0B"
+            })
+
         for c in codings:
+            meta = TYPE_META["coding"]
             activities.append({
                 "id": f"coding_{c.id}",
-                "type": "Coding Test",
+                "type": meta["label"],
                 "score": c.code_quality_score or 0,
                 "timestamp": c.created_at,
-                "icon": "code",
-                "color": "#4A4DC9"
+                "icon": meta["icon"],
+                "color": meta["color"]
             })
 
         # Only include Interviews and Coding Tests in Recent Activity

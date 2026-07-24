@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, UploadFile, File, status
-from typing import Any
+from typing import Any, List
 from app.models.user import User
 from app.schemas.resume import ResumeAnalysisResponse
 from app.services.resume_service import ResumeService
@@ -28,3 +28,14 @@ async def get_resume_analysis(
     """
     analysis = await resume_service.get_latest_resume_analysis(str(current_user.id))
     return analysis
+
+@router.get("/history", response_model=List[ResumeAnalysisResponse])
+async def get_resume_history(
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """
+    Get all resume analyses for the user.
+    """
+    from app.models.resume import ResumeAnalysis
+    history = await ResumeAnalysis.find(ResumeAnalysis.user_id == str(current_user.id)).sort(-ResumeAnalysis.created_at).to_list()
+    return history

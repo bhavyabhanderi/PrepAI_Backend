@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, status, UploadFile, File, HTTPException
-from typing import Any
+from typing import Any, List
 from app.models.user import User
 from app.auth.dependencies import get_current_user
 from app.schemas.analytics import PerformanceReportResponse, LearningPlanResponse, UpdateTaskRequest
@@ -85,6 +85,18 @@ async def get_latest_learning_plan(
     if not plan:
         raise HTTPException(status_code=404, detail="No learning plan found")
     return plan
+
+@router.get("/learning-plan/history", response_model=List[LearningPlanResponse])
+async def get_learning_plan_history(
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """
+    Get all learning plans for the user.
+    """
+    plans = await LearningPlan.find(
+        LearningPlan.user_id == str(current_user.id)
+    ).sort(-LearningPlan.created_at).to_list()
+    return plans
 
 @router.put("/learning-plan/{plan_id}/task")
 async def update_learning_plan_task(
