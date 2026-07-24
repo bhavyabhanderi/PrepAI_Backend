@@ -12,6 +12,17 @@ router = APIRouter()
 coding_service = CodingService()
 coding_generator = CodingGenerator()
 
+@router.get("/history")
+async def get_coding_history(
+    current_user: User = Depends(get_current_user)
+) -> Any:
+    """
+    Get coding history for the user.
+    """
+    from app.models.coding import CodingSubmission
+    submissions = await CodingSubmission.find(CodingSubmission.user_id == str(current_user.id)).sort(-CodingSubmission.created_at).to_list()
+    return submissions
+
 @router.get("/problems", response_model=List[CodingProblem])
 async def get_coding_problems(
     current_user: User = Depends(get_current_user)

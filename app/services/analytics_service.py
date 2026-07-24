@@ -568,16 +568,8 @@ class AnalyticsService:
                 "icon": "code",
                 "color": "#4A4DC9"
             })
-        for s in syllabi:
-            activities.append({
-                "id": f"syllabus_{s.id}",
-                "type": "Syllabus Analysis",
-                "score": None,
-                "timestamp": s.created_at,
-                "icon": "book",
-                "color": "#10B981"
-            })
 
+        # Only include Interviews and Coding Tests in Recent Activity
         activities.sort(key=lambda x: x["timestamp"], reverse=True)
         recent_activity = []
         
