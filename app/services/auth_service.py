@@ -74,8 +74,8 @@ class AuthService:
             import urllib.request
             import json
             
-            url = f"https://www.googleapis.com/oauth2/v3/userinfo?access_token={token}"
-            req = urllib.request.Request(url)
+            url = "https://www.googleapis.com/oauth2/v3/userinfo"
+            req = urllib.request.Request(url, headers={"Authorization": f"Bearer {token}"})
             try:
                 with urllib.request.urlopen(req) as response:
                     idinfo = json.loads(response.read().decode())
