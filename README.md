@@ -33,7 +33,6 @@ This is the backend for **PrepAI**, an AI-powered interview preparation platform
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/bhavyabhanderi/PrepAI_Backend.git
-   cd PrepAI/backend
    ```
 
 2. **Create a virtual environment:**
