@@ -73,6 +73,20 @@ class CodingService:
             elif data.language.lower() == "javascript":
                 # Remove prompts from rl.question() in node
                 executable_code = re.sub(r'\.question\(\s*(["\'])(.*?)\1\s*,', '.question("",', executable_code)
+                
+                # Polyfill prompt() since it's a browser API, making it work synchronously via stdin
+                js_polyfill = """
+const fs = require('fs');
+let __stdin_lines = [];
+try { 
+    __stdin_lines = fs.readFileSync(0, 'utf-8').split(/\\r?\\n/); 
+} catch(e) {}
+function prompt(msg) { 
+    return __stdin_lines.shift() || ''; 
+}
+"""
+                executable_code = js_polyfill + executable_code
+                
                 process = subprocess.run(
                     ["node", "-e", executable_code],
                     capture_output=True,
