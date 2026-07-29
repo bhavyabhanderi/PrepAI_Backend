@@ -52,6 +52,7 @@ class CodingService:
                     ["python", "-c", data.source_code],
                     capture_output=True,
                     text=True,
+                    input=data.stdin if data.stdin else None,
                     timeout=5
                 )
                 execution_output = process.stdout
@@ -62,6 +63,7 @@ class CodingService:
                     ["node", "-e", data.source_code],
                     capture_output=True,
                     text=True,
+                    input=data.stdin if data.stdin else None,
                     timeout=5
                 )
                 execution_output = process.stdout

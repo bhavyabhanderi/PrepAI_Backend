@@ -9,6 +9,7 @@ class CodeExecutionRequest(BaseModel):
     interview_id: Optional[str] = None
     language: str
     source_code: str
+    stdin: Optional[str] = None
     test_cases: List[dict] = [] # e.g. [{"input": "1 2", "expected_output": "3"}]
 
 class CodeExecutionResponse(BaseModel):
