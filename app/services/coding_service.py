@@ -6,6 +6,9 @@ import asyncio
 import subprocess
 import time
 import re
+import sys
+import tempfile
+import os
 
 class CodingService:
     def __init__(self):
@@ -49,32 +52,106 @@ class CodingService:
         
         try:
             executable_code = data.source_code
+            safe_stdin = data.stdin
+            if safe_stdin and not safe_stdin.endswith('\n'):
+                safe_stdin += '\n'
             
             if data.language.lower() == "python":
                 # Remove prompts from input() to prevent them from printing to stdout
                 executable_code = re.sub(r'input\(\s*(["\'])(.*?)\1\s*\)', 'input()', executable_code)
                 
                 process = subprocess.run(
-                    ["python", "-c", executable_code],
+                    [sys.executable, "-c", executable_code],
                     capture_output=True,
                     text=True,
-                    input=data.stdin if data.stdin else None,
+                    input=safe_stdin if safe_stdin else None,
                     timeout=5
                 )
                 execution_output = process.stdout
                 if process.stderr:
                     error_msg = process.stderr
             elif data.language.lower() == "javascript":
+                # Remove prompts from rl.question() in node
+                executable_code = re.sub(r'\.question\(\s*(["\'])(.*?)\1\s*,', '.question("",', executable_code)
                 process = subprocess.run(
-                    ["node", "-e", data.source_code],
+                    ["node", "-e", executable_code],
                     capture_output=True,
                     text=True,
-                    input=data.stdin if data.stdin else None,
+                    input=safe_stdin if safe_stdin else None,
                     timeout=5
                 )
                 execution_output = process.stdout
                 if process.stderr:
                     error_msg = process.stderr
+            elif data.language.lower() in ["cpp", "c++"]:
+                import tempfile
+                import os
+                try:
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        source_path = os.path.join(temp_dir, "main.cpp")
+                        exe_path = os.path.join(temp_dir, "main.exe") if os.name == 'nt' else os.path.join(temp_dir, "main")
+                        
+                        with open(source_path, "w", encoding="utf-8") as f:
+                            f.write(data.source_code)
+                        
+                        # Compile
+                        compile_process = subprocess.run(
+                            ["g++", source_path, "-o", exe_path],
+                            capture_output=True,
+                            text=True,
+                            timeout=10
+                        )
+                        
+                        if compile_process.returncode != 0:
+                            error_msg = f"Compilation Error:\n{compile_process.stderr}"
+                        else:
+                            # Execute
+                            process = subprocess.run(
+                                [exe_path],
+                                capture_output=True,
+                                text=True,
+                                input=safe_stdin if safe_stdin else None,
+                                timeout=5
+                            )
+                            execution_output = process.stdout
+                            if process.stderr:
+                                error_msg = process.stderr
+                except FileNotFoundError:
+                    error_msg = "Execution Failed: C++ compiler (g++) not found on this system."
+            elif data.language.lower() == "java":
+                import tempfile
+                import os
+                try:
+                    with tempfile.TemporaryDirectory() as temp_dir:
+                        source_path = os.path.join(temp_dir, "Main.java")
+                        
+                        with open(source_path, "w", encoding="utf-8") as f:
+                            f.write(data.source_code)
+                        
+                        # Compile
+                        compile_process = subprocess.run(
+                            ["javac", source_path],
+                            capture_output=True,
+                            text=True,
+                            timeout=10
+                        )
+                        
+                        if compile_process.returncode != 0:
+                            error_msg = f"Compilation Error:\n{compile_process.stderr}"
+                        else:
+                            # Execute
+                            process = subprocess.run(
+                                ["java", "-cp", temp_dir, "Main"],
+                                capture_output=True,
+                                text=True,
+                                input=safe_stdin if safe_stdin else None,
+                                timeout=5
+                            )
+                            execution_output = process.stdout
+                            if process.stderr:
+                                error_msg = process.stderr
+                except FileNotFoundError:
+                    error_msg = "Execution Failed: Java compiler (javac) or runtime not found on this system."
             else:
                 execution_output = f"Execution for {data.language} is not yet supported in this environment.\nMock output: Hello, PrepAI!"
         except subprocess.TimeoutExpired:
