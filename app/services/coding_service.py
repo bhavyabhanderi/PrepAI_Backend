@@ -139,10 +139,15 @@ function prompt(msg) {
                 import shutil
                 try:
                     env = os.environ.copy()
+                    javac_cmd = "javac"
+                    java_cmd = "java"
+                    
                     if os.name == 'nt' and not shutil.which('javac'):
                         java_bin = r"C:\Program Files\Java\jdk-17\bin"
                         if os.path.exists(java_bin):
                             env["PATH"] = java_bin + os.pathsep + env["PATH"]
+                            javac_cmd = os.path.join(java_bin, "javac.exe")
+                            java_cmd = os.path.join(java_bin, "java.exe")
                             
                     with tempfile.TemporaryDirectory() as temp_dir:
                         source_path = os.path.join(temp_dir, "Main.java")
@@ -152,7 +157,7 @@ function prompt(msg) {
                         
                         # Compile
                         compile_process = subprocess.run(
-                            ["javac", source_path],
+                            [javac_cmd, source_path],
                             capture_output=True,
                             text=True,
                             env=env,
@@ -164,7 +169,7 @@ function prompt(msg) {
                         else:
                             # Execute
                             process = subprocess.run(
-                                ["java", "-cp", temp_dir, "Main"],
+                                [java_cmd, "-cp", temp_dir, "Main"],
                                 capture_output=True,
                                 text=True,
                                 input=safe_stdin if safe_stdin else None,
