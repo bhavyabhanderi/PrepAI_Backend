@@ -3,6 +3,8 @@ from app.models.coding import CodingSubmission
 from app.schemas.coding import CodeExecutionRequest
 from app.ai.code_reviewer import CodeReviewer
 import asyncio
+import subprocess
+import time
 
 class CodingService:
     def __init__(self):
@@ -39,14 +41,44 @@ class CodingService:
             await submission.insert()
             return submission
 
-        # 1. Mock Code Execution
-        # In a real environment, you'd send `data.source_code` to a sandboxed environment
-        # and run `data.test_cases` against it.
-        await asyncio.sleep(0.5) # Simulate execution delay
+        # 1. Actual Code Execution
+        execution_output = ""
+        error_msg = None
+        start_time = time.time()
         
-        # We will mock the execution passing all test cases for demonstration
+        try:
+            if data.language.lower() == "python":
+                process = subprocess.run(
+                    ["python", "-c", data.source_code],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                execution_output = process.stdout
+                if process.stderr:
+                    error_msg = process.stderr
+            elif data.language.lower() == "javascript":
+                process = subprocess.run(
+                    ["node", "-e", data.source_code],
+                    capture_output=True,
+                    text=True,
+                    timeout=5
+                )
+                execution_output = process.stdout
+                if process.stderr:
+                    error_msg = process.stderr
+            else:
+                execution_output = f"Execution for {data.language} is not yet supported in this environment.\nMock output: Hello, PrepAI!"
+        except subprocess.TimeoutExpired:
+            error_msg = "Execution Timed Out (5 seconds limit)."
+        except Exception as e:
+            error_msg = f"Execution Failed: {str(e)}"
+            
+        execution_time_ms = (time.time() - start_time) * 1000
+        
+        # We will mock the test cases logic for now but show real output
         total_tests = len(data.test_cases) if data.test_cases else 1
-        passed_tests = total_tests
+        passed_tests = total_tests if not error_msg else 0
         
         # 2. AI Code Review
         review = await self.reviewer.analyze_code(data.source_code, data.language)
@@ -59,9 +91,11 @@ class CodingService:
             source_code=data.source_code,
             test_cases_passed=passed_tests,
             total_test_cases=total_tests,
-            execution_time_ms=12.5, # Mock metric
+            execution_time_ms=execution_time_ms,
             memory_used_kb=1024.0, # Mock metric
             status="passed" if passed_tests == total_tests else "failed",
+            output=execution_output.strip() if execution_output else None,
+            error_message=error_msg.strip() if error_msg else None,
             time_complexity=review.get("time_complexity"),
             space_complexity=review.get("space_complexity"),
             optimization_suggestions=review.get("optimization_suggestions", []),

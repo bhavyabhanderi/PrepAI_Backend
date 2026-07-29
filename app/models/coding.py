@@ -13,6 +13,7 @@ class CodingSubmission(Document):
     execution_time_ms: float = 0.0
     memory_used_kb: float = 0.0
     status: str = "pending" # pending, passed, failed, error
+    output: Optional[str] = None
     error_message: Optional[str] = None
     
     # AI Review Data

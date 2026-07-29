@@ -18,6 +18,7 @@ class CodeExecutionResponse(BaseModel):
     total_test_cases: int
     execution_time_ms: float
     memory_used_kb: float
+    output: Optional[str] = None
     error_message: Optional[str]
     time_complexity: Optional[str]
     space_complexity: Optional[str]
