@@ -5,6 +5,7 @@ from app.ai.code_reviewer import CodeReviewer
 import asyncio
 import subprocess
 import time
+import re
 
 class CodingService:
     def __init__(self):
@@ -47,9 +48,14 @@ class CodingService:
         start_time = time.time()
         
         try:
+            executable_code = data.source_code
+            
             if data.language.lower() == "python":
+                # Remove prompts from input() to prevent them from printing to stdout
+                executable_code = re.sub(r'input\(\s*(["\'])(.*?)\1\s*\)', 'input()', executable_code)
+                
                 process = subprocess.run(
-                    ["python", "-c", data.source_code],
+                    ["python", "-c", executable_code],
                     capture_output=True,
                     text=True,
                     input=data.stdin if data.stdin else None,
