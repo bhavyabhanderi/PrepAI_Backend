@@ -9,6 +9,7 @@ import re
 import sys
 import tempfile
 import os
+import shutil
 
 class CodingService:
     def __init__(self):
@@ -135,7 +136,14 @@ function prompt(msg) {
             elif data.language.lower() == "java":
                 import tempfile
                 import os
+                import shutil
                 try:
+                    env = os.environ.copy()
+                    if os.name == 'nt' and not shutil.which('javac'):
+                        java_bin = r"C:\Program Files\Java\jdk-17\bin"
+                        if os.path.exists(java_bin):
+                            env["PATH"] = java_bin + os.pathsep + env["PATH"]
+                            
                     with tempfile.TemporaryDirectory() as temp_dir:
                         source_path = os.path.join(temp_dir, "Main.java")
                         
@@ -147,6 +155,7 @@ function prompt(msg) {
                             ["javac", source_path],
                             capture_output=True,
                             text=True,
+                            env=env,
                             timeout=10
                         )
                         
@@ -159,6 +168,7 @@ function prompt(msg) {
                                 capture_output=True,
                                 text=True,
                                 input=safe_stdin if safe_stdin else None,
+                                env=env,
                                 timeout=5
                             )
                             execution_output = process.stdout
