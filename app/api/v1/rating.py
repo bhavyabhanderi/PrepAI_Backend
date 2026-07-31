@@ -3,6 +3,7 @@ from typing import Any, Dict, List
 from app.models.user import User
 from app.models.rating import Rating
 from app.models.interview import Interview
+from app.models.coding import CodingSubmission
 from app.models.analytics import PerformanceReport
 from app.schemas.rating import RatingCreate, RatingResponse, RatingStats, TestimonialResponse
 from app.auth.dependencies import get_current_user
@@ -53,7 +54,7 @@ async def get_rating_stats() -> Any:
     Get aggregate rating stats.
     """
     total_users = await User.find_all().count()
-    total_interviews = await Interview.find_all().count()
+    total_interviews = await Interview.find_all().count() + await CodingSubmission.find_all().count()
     
     total_reports = await PerformanceReport.count()
     successful_reports = await PerformanceReport.find(PerformanceReport.overall_score >= 70).count()

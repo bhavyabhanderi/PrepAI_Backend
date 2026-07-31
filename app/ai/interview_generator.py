@@ -61,7 +61,7 @@ class InterviewGenerator:
             logger.error(f"Groq API Error in generate_questions: {e}")
             return self._get_dummy_questions(count)
 
-    async def generate_aptitude_questions(self, count: int = 20) -> list:
+    async def generate_aptitude_questions(self, difficulty: str = "medium", count: int = 20) -> list:
         """
         Generate a list of aptitude multiple-choice questions.
         """
@@ -69,17 +69,26 @@ class InterviewGenerator:
             logger.warning("Groq API key not configured. Returning dummy aptitude questions.")
             return self._get_dummy_aptitude_questions(count)
 
+        difficulty_text = f"The difficulty level of the questions should be: {difficulty.upper()}." if difficulty != "all" else "The difficulty level should be a mix of easy, medium, and hard."
+
+        import uuid
+        random_seed = str(uuid.uuid4())
+        
         prompt = f"""
-        Generate exactly {count} aptitude test multiple-choice questions. 
+        Generate exactly {count} brand new, highly unique aptitude test multiple-choice questions. 
         Include a mix of Mathematics, Logical Reasoning, and basic Coding/Computer Science questions.
-        Ensure they are randomized and different every time.
+        {difficulty_text}
+        
+        IMPORTANT RANDOMIZATION SEED: {random_seed}
+        Use this seed to completely randomize the scenarios, numbers, logic puzzles, and phrasing. 
+        Do not use standard generic questions. Create fresh, unseen problems every single time.
         
         Respond with a valid JSON array of objects. Each object MUST have this exact structure:
         {{
             "questions": [
                 {{
                     "question_text": "(string)",
-                    "difficulty": "medium",
+                    "difficulty": "{difficulty if difficulty != 'all' else 'mixed'}",
                     "options": ["option A", "option B", "option C", "option D"],
                     "correct_answer": "(string, must perfectly match one of the options)",
                     "expected_keywords": []

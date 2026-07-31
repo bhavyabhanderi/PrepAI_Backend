@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, status
 from typing import Any, List
 from app.models.user import User
 from app.models.interview import Interview
+from app.models.analytics import PerformanceReport
 from app.schemas.interview import InterviewCreate, InterviewResponse, QuestionResponse, AnswerSubmit, AnswerResponse
 from app.services.interview_service import InterviewService
 from app.auth.dependencies import get_current_user
@@ -19,6 +20,15 @@ async def get_interview_history(
     interviews = await Interview.find(
         Interview.user_id == str(current_user.id)
     ).sort(-Interview.created_at).to_list()
+
+    # Scores live in the PerformanceReport collection (keyed by interview_id),
+    # not on the Interview itself. Fetch them once and map by interview_id so
+    # the history can show the overall score instead of "N/A".
+    reports = await PerformanceReport.find(
+        PerformanceReport.user_id == str(current_user.id)
+    ).to_list()
+    score_by_interview = {r.interview_id: r.overall_score for r in reports}
+
     result = []
     for iv in interviews:
         result.append({
@@ -29,6 +39,7 @@ async def get_interview_history(
             "difficulty_level": iv.difficulty_level,
             "created_at": iv.created_at.isoformat() if iv.created_at else None,
             "completed_at": iv.completed_at.isoformat() if iv.completed_at else None,
+            "score": score_by_interview.get(str(iv.id)),
         })
     return result
 

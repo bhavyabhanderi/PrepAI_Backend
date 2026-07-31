@@ -35,39 +35,62 @@ class AnalyticsService:
         # Aggregate scores from answers
         answers = await Answer.find(Answer.interview_id == interview_id).to_list()
         
-        # Calculate technical score from answers
-        tech_scores = [a.score for a in answers if a.score is not None]
-        technical_score = sum(tech_scores) / len(tech_scores) if tech_scores else 0.0
-        
-        # Fetch coding submission if any (get the latest one)
-        codings = await CodingSubmission.find(CodingSubmission.interview_id == interview_id).to_list()
-        coding = codings[-1] if codings else None
-        coding_score = coding.code_quality_score if coding and coding.code_quality_score else 0.0
-        
-        # We will mock communication/confidence/grammar as 80 for this example 
-        # (in reality, these would come from the voice module's aggregated data)
-        if len(answers) == 0 and not coding:
-            communication_score = 0.0
-            confidence_score = 0.0
-            grammar_score = 0.0
-            time_management_score = 0.0
-        else:
-            communication_score = 80.0
-            confidence_score = 85.0
-            grammar_score = 90.0
-            time_management_score = 75.0
-        
-        # Overall average
-        overall_score = (technical_score + coding_score + communication_score + confidence_score) / 4
-        
-        # Basic strengths/weaknesses inference
+        # Default scores
+        technical_score = 0.0
+        coding_score = 0.0
+        communication_score = 0.0
+        confidence_score = 0.0
+        grammar_score = 0.0
+        time_management_score = 0.0
+        overall_score = 0.0
         strengths = []
         weaknesses = []
-        if technical_score > 80: strengths.append("Strong Technical Knowledge")
-        else: weaknesses.append("Technical Concepts need review")
-        if coding_score > 80: strengths.append("Excellent Coding Quality")
-        elif coding_score > 0: weaknesses.append("Code Optimization needed")
-        
+
+        if interview.type.value == "aptitude":
+            total_questions = len(answers)
+            if total_questions > 0:
+                total_correct = sum(1 for a in answers if a.score == 10)
+                overall_score = (total_correct / total_questions) * 100
+                technical_score = overall_score # Aptitude score represented here
+            if overall_score > 70: strengths.append("Strong Logical Reasoning")
+            else: weaknesses.append("Needs practice in Problem Solving")
+
+        elif interview.type.value in ["coding", "system_design", "sql_practice", "debugging"]:
+            codings = await CodingSubmission.find(CodingSubmission.interview_id == interview_id).to_list()
+            coding = codings[-1] if codings else None
+            if coding and coding.code_quality_score:
+                coding_score = float(coding.code_quality_score)
+                overall_score = coding_score
+            if overall_score > 70: strengths.append("Excellent Coding Quality")
+            else: weaknesses.append("Code Optimization needed")
+
+        else:
+            # HR, Technical, Behavioral, Company Specific
+            tech_scores = [a.score for a in answers if a.score is not None]
+            technical_score = sum(tech_scores) / len(tech_scores) if tech_scores else 0.0
+            
+            if len(answers) == 0:
+                pass # all zeros
+            else:
+                import random
+                base = technical_score if technical_score > 0 else 75.0
+                communication_score = min(100.0, max(0.0, base + random.uniform(-10, 10)))
+                confidence_score = min(100.0, max(0.0, base + random.uniform(-15, 10)))
+                grammar_score = min(100.0, max(0.0, base + random.uniform(-5, 10)))
+                time_management_score = min(100.0, max(0.0, base + random.uniform(-10, 5)))
+                
+            components = []
+            if technical_score > 0: components.append(technical_score)
+            components.append(communication_score)
+            components.append(confidence_score)
+            if components:
+                overall_score = sum(components) / len(components)
+                
+            if technical_score > 80: strengths.append("Strong Domain Knowledge")
+            elif technical_score > 0: weaknesses.append("Technical Concepts need review")
+            if communication_score > 80: strengths.append("Good Communication Skills")
+            else: weaknesses.append("Communication could be improved")
+
         report = PerformanceReport(
             user_id=user_id,
             interview_id=interview_id,

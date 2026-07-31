@@ -29,7 +29,10 @@ class InterviewService:
         
         # Generate Initial Questions
         if data.type == InterviewType.APTITUDE:
-            q_data = await self.generator.generate_aptitude_questions(count=20)
+            q_data = await self.generator.generate_aptitude_questions(
+                difficulty=interview.difficulty_level or "all",
+                count=20
+            )
         else:
             q_data = await self.generator.generate_questions(
                 interview_type=data.type.value,

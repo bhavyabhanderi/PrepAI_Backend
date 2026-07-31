@@ -28,6 +28,9 @@ class CodingGenerator:
         You are an expert interviewer. Generate a brand new, highly unique, and completely randomized coding interview problem about {topic} with {difficulty} difficulty.
         Ensure the problem scenario and logic are different from generic standard problems, so that repeated requests always yield fresh, distinct challenges.
         
+        IMPORTANT: The `initial_templates` must ONLY contain the empty function signature/class definition. DO NOT include the actual solution, logic, or answer in the `initial_templates`. The templates must be completely empty inside the function body so the candidate can solve it themselves.
+        
+        
         Provide your response in a valid JSON object matching this structure EXACTLY:
         {{
             "title": "(problem title, e.g. Valid Parentheses)",
