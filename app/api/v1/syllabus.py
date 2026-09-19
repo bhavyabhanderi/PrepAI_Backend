@@ -73,3 +73,27 @@ async def chat_on_topic(request: ChatRequest, current_user: User = Depends(get_c
     except Exception as e:
         logger.error(f"Error in syllabus chat: {str(e)}")
         raise HTTPException(status_code=500, detail="Failed to chat with AI.")
+
+
+@router.delete("/{syllabus_id}")
+async def delete_syllabus(syllabus_id: str, current_user: User = Depends(get_current_user)):
+    try:
+        from beanie import PydanticObjectId
+        try:
+            obj_id = PydanticObjectId(syllabus_id)
+        except Exception:
+            raise HTTPException(status_code=400, detail="Invalid ID format")
+            
+        syllabus = await SavedSyllabus.get(obj_id)
+        if not syllabus:
+            raise HTTPException(status_code=404, detail="Syllabus not found")
+        if syllabus.user_id != str(current_user.id):
+            raise HTTPException(status_code=403, detail="Not authorized to delete this syllabus")
+            
+        await syllabus.delete()
+        return {"message": "Syllabus deleted successfully"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting syllabus: {e}")
+        raise HTTPException(status_code=500, detail="Failed to delete syllabus")

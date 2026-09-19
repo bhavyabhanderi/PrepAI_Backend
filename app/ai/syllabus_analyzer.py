@@ -41,8 +41,8 @@ class SyllabusAnalyzer:
         Analyze syllabus text using Groq LLM to extract subject, chapters, and topics.
         """
         if not self.client:
-            logger.warning("Groq API key not configured. Returning dummy syllabus analysis.")
-            return self._get_dummy_analysis()
+            logger.error("Groq API key not configured. Cannot analyze syllabus.")
+            raise ValueError("Groq API key not configured. Please add GROQ_API_KEY to your environment variables.")
 
         prompt = f"""
         You are an expert academic curriculum analyzer.
@@ -89,23 +89,8 @@ class SyllabusAnalyzer:
             return result_json
         except Exception as e:
             logger.error(f"Groq API Error in SyllabusAnalyzer: {e}")
-            return self._get_dummy_analysis()
+            raise ValueError(f"Failed to analyze syllabus: {str(e)}")
             
-    def _get_dummy_analysis(self) -> dict:
-        return {
-            "subject": "Artificial Intelligence (Dummy Data)",
-            "chapters": [
-                {
-                    "chapter": "Introduction to AI",
-                    "topics": ["What is AI?", "AI Task Domains", "Applications of an AI"]
-                },
-                {
-                    "chapter": "Problems, State Space Search",
-                    "topics": ["Problem space and Search", "Production System", "AI Problem characteristics"]
-                }
-            ]
-        }
-
     async def chat_on_topic(self, topic: str, message: str, history: list) -> str:
         """
         Act as an AI tutor and respond to a student's question about a specific topic.
@@ -136,4 +121,4 @@ class SyllabusAnalyzer:
             return response.choices[0].message.content
         except Exception as e:
             logger.error(f"Groq API Error in chat_on_topic: {e}")
-            return "I encountered an error while processing your request. Please try again later."
+            return f"I encountered an error while communicating with the AI: {str(e)}"
