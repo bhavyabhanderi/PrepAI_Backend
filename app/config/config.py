@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     
     # External APIs
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama3-70b-8192"
+    GROQ_MODEL: str = "llama-3.1-8b-instant"
     NVIDIA_API_KEY: Optional[str] = None
     RESEND_API_KEY: Optional[str] = None
 
