@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     
     # External APIs
     GROQ_API_KEY: Optional[str] = None
-    GROQ_MODEL: str = "llama-3.1-8b-instant"
+    GROQ_MODEL: str = "openai/gpt-oss-20b"
     NVIDIA_API_KEY: Optional[str] = None
     RESEND_API_KEY: Optional[str] = None
 
